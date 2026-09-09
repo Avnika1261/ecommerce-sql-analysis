@@ -22,3 +22,49 @@ SELECT AVG(OrderTotal) AS AvgOrderValue FROM (
   SELECT InvoiceNo, SUM(Quantity * UnitPrice) AS OrderTotal
   FROM sales GROUP BY InvoiceNo
 ) AS orders;
+
+-- 6. Query performance optimization
+-- Checked query plan before indexing (showed full table scan on 'sales')
+.timer on
+EXPLAIN QUERY PLAN
+SELECT CustomerID, COUNT(DISTINCT InvoiceNo) AS Orders
+FROM sales GROUP BY CustomerID HAVING Orders > 1 ORDER BY Orders DESC;
+
+EXPLAIN QUERY PLAN
+SELECT AVG(OrderTotal) AS AvgOrderValue FROM (
+  SELECT InvoiceNo, SUM(Quantity * UnitPrice) AS OrderTotal
+  FROM sales GROUP BY InvoiceNo
+) AS orders;
+
+-- Ran and timed both queries before indexing
+SELECT CustomerID, COUNT(DISTINCT InvoiceNo) AS Orders
+FROM sales GROUP BY CustomerID HAVING Orders > 1 ORDER BY Orders DESC;
+
+SELECT AVG(OrderTotal) AS AvgOrderValue FROM (
+  SELECT InvoiceNo, SUM(Quantity * UnitPrice) AS OrderTotal
+  FROM sales GROUP BY InvoiceNo
+) AS orders;
+
+-- Added indexes on grouping columns
+CREATE INDEX idx_customerid ON sales(CustomerID);
+CREATE INDEX idx_invoiceno ON sales(InvoiceNo);
+
+-- Checked query plan after indexing (should now show index search instead of scan)
+EXPLAIN QUERY PLAN
+SELECT CustomerID, COUNT(DISTINCT InvoiceNo) AS Orders
+FROM sales GROUP BY CustomerID HAVING Orders > 1 ORDER BY Orders DESC;
+
+EXPLAIN QUERY PLAN
+SELECT AVG(OrderTotal) AS AvgOrderValue FROM (
+  SELECT InvoiceNo, SUM(Quantity * UnitPrice) AS OrderTotal
+  FROM sales GROUP BY InvoiceNo
+) AS orders;
+
+-- Ran and timed both queries after indexing
+SELECT CustomerID, COUNT(DISTINCT InvoiceNo) AS Orders
+FROM sales GROUP BY CustomerID HAVING Orders > 1 ORDER BY Orders DESC;
+
+SELECT AVG(OrderTotal) AS AvgOrderValue FROM (
+  SELECT InvoiceNo, SUM(Quantity * UnitPrice) AS OrderTotal
+  FROM sales GROUP BY InvoiceNo
+) AS orders;
